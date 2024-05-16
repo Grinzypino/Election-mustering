@@ -6,7 +6,7 @@ const fs = require('fs');
 const PORT = process.env.PORT || 8000;
 
 // MongoDB connection URI
-const MONGODB_URI = '';
+const MONGODB_URI = 'mongodb+srv://electionbackend:ePwDnqXF3GNzmwCc@election.ptaluj8.mongodb.net/?retryWrites=true&w=majority&appName=election';
 
 
 // Define a schema for officer data

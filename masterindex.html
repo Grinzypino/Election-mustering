@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Location Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    select, button {
+      font-size: 16px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    button {
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
+    button.confirm-btn {
+      background-color: #28a745;
+    }
+
+    .confirm-message {
+      margin-bottom: 20px;
+    }
+    #acLabel, #acSelect, #cnfbtn, #strbtn, #startButton , #confirmButton, #psLabel, #psSelect{
+        display: none;
+    }
+  </style></head>
+<body>
+    
+    
+    <label for="role">Select role:</label>
+  <select id="roleSelect">
+    <option value="" disabled selected>Select your role</option>
+    <option value="1">Polling Party</option>
+    <option value="2">Patrolling Officer</option>
+  </select>
+
+  <label id="acLabel" for="AC">Select AC:</label>
+  <select id="acSelect">
+    <option value="" disabled selected>Select AC</option>
+    <option value="1">384 Pindra Polling Station </option>
+    <option value="2">385 Ajgara (S.C.)  Polling Station </option>
+    <option value="3">386 Shivpur Polling Station </option>
+    <option value="4">387 Rohaniya Polling Station </option>
+    <option value="5">388 Varanasi North Polling Station </option>
+    <option value="6">389 Varanasi South Polling Station </option>
+    <option value="7">390 Varanasi Cantt. Polling Station </option>
+    <option value="8">391 Sevapuri Polling Station </option>
+  </select>
+    
+  
+  <label id="psLabel" for="psSelect">Select PS:</label>
+  <select id="psSelect">
+      <option value="" disabled selected>Select PS</option>
+      <option value="1">PS 1: COMPOSIT VIDYALAYA SARSAWA R.NO.1</option>
+      <option value="4">PS 4: PRATHMIK VIDYALAYA LODHAN R.NO.1</option>
+      <option value="35">PS 35: SRI RAMESHWAR MAHADEV INTER COLLAGE CHANDMARI R.NO.1</option>
+      <option value="83">PS 83: PRATHMIK VIDYALAYA DHOORIPUR R.NO.- 1</option>
+      
+    </select>
+
+    <div id="cnfbtn" class="confirm-message">
+     <p>Press 'Confirm' only if details selected are correct:</p>
+     <button id="confirmButton">Confirm</button>
+   </div>
+
+   <div id="strbtn" class="confirm-message">
+     <p>Press 'Start Tracking' to start tracking:</p>
+     <button id="startButton">Start Tracking</button>
+     <p class="message" id="statusMessage"></p>
+   </div>
+
+    
+   <script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const psSelect = document.getElementById("psSelect");  
+        const startButton = document.getElementById("startButton");
+        const statusMessage = document.getElementById("statusMessage");
+
+        document.getElementById('roleSelect').addEventListener('change', function() {
+            document.getElementById('acLabel').style.display = 'block';
+            document.getElementById('acSelect').style.display = 'block';
+            });
+
+        document.getElementById('acSelect').addEventListener('change', function() {
+            if (document.getElementById('roleSelect').value == 1) {
+                document.getElementById('psLabel').style.display = 'block';
+                document.getElementById('psSelect').style.display = 'block';
+            }
+            else {
+                document.getElementById('cnfbtn').style.display = 'block';
+                document.getElementById('confirmButton').style.display = 'block';
+            }
+            });
+
+        document.getElementById('psSelect').addEventListener('change', function() {
+            document.getElementById('cnfbtn').style.display = 'block';
+            document.getElementById('confirmButton').style.display = 'block';
+            });
+
+        document.getElementById('confirmButton').addEventListener('click', function() {
+            document.getElementById('cnfbtn').style.display = 'none';
+            document.getElementById('confirmButton').style.display = 'none';
+            document.getElementById('strbtn').style.display = 'block';
+            document.getElementById('startButton').style.display = 'block';
+            });
+
+      startButton.addEventListener("click", function() {
+        statusMessage.textContent = "Election Team tracking your location, Don't close...";
+
+        sendLocation();
+
+        setInterval(sendLocation, 60000); // Send location every 1 minute
+      });
+
+      function sendLocation() {
+        const psValue = psSelect.value;
+
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            
+            const locationData = {
+              PSnum: psValue,
+              current_location: {
+                type: "Point",
+                coordinates: [latitude, longitude]
+              }
+            };
+
+            sendToServer(locationData);
+          }, showError);
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+
+      function sendToServer(locationData) {
+        fetch("/saveLocation", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(locationData)
+        })
+        .then(response => {
+          console.log("Location data sent successfully.");
+        })
+        .catch(error => {
+          console.error("Error sending location data:", error);
+        });
+      }
+
+      function showError(error) {
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            alert("User denied the request for Geolocation.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            alert("Location information is unavailable.");
+            break;
+          case error.TIMEOUT:
+            alert("The request to get user location timed out.");
+            break;
+          case error.UNKNOWN_ERROR:
+            alert("An unknown error occurred.");
+            break;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
