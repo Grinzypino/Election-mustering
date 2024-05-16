@@ -34,7 +34,7 @@
     .confirm-message {
       margin-bottom: 20px;
     }
-    #acLabel, #acSelect, #cnfbtn, #strbtn, #startButton , #confirmButton, #psLabel, #psSelect{
+    #acLabel, #acSelect, #cnfbtn, #strbtn, #startButton , #confirmButton, #psLabel, #psSelect, #snoLabel, #snoSelect{
         display: none;
     }
   </style></head>
@@ -72,6 +72,16 @@
       
     </select>
 
+  <label id="snoLabel" for="snoSelect">Select Sector No.</label>
+  <select id="snoSelect">
+      <option value="" disabled selected>Select Sector No.</option>
+      <option value="1">Sector NO. 1: </option>
+      <option value="4">Sector NO. 4: </option>
+      <option value="35">Sector NO. 35: </option>
+      <option value="83">Sector NO. 83: </option>
+      
+    </select>
+
     <div id="cnfbtn" class="confirm-message">
      <p>Press 'Confirm' only if details selected are correct:</p>
      <button id="confirmButton">Confirm</button>
@@ -102,12 +112,17 @@
                 document.getElementById('psSelect').style.display = 'block';
             }
             else {
-                document.getElementById('cnfbtn').style.display = 'block';
-                document.getElementById('confirmButton').style.display = 'block';
+                document.getElementById('snoLabel').style.display = 'block';
+                document.getElementById('snoSelect').style.display = 'block';
             }
             });
 
         document.getElementById('psSelect').addEventListener('change', function() {
+            document.getElementById('cnfbtn').style.display = 'block';
+            document.getElementById('confirmButton').style.display = 'block';
+            });
+        
+        document.getElementById('snoSelect').addEventListener('change', function() {
             document.getElementById('cnfbtn').style.display = 'block';
             document.getElementById('confirmButton').style.display = 'block';
             });
