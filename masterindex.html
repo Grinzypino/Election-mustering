@@ -22,49 +22,52 @@
       border-radius: 4px;
       margin-bottom: 10px;
     }
-    button {
+    #confirmButton {
       background-color: #007bff;
       color: #fff;
       cursor: pointer;
     }
-    button.confirm-btn {
+    #startButton {
       background-color: #28a745;
+      color: #fff;
+      cursor: pointer;
     }
 
     .confirm-message {
       margin-bottom: 20px;
     }
-    #acLabel, #acSelect, #cnfbtn, #strbtn, #startButton , #confirmButton, #psLabel, #psSelect, #snoLabel, #snoSelect{
+    #acLabel, #acSelect, #cnfbtn, #strbtn, #startButton , #confirmButton, #psLabel, #psSelect, #snoLabel, #snoSelect, #znoLabel, #znoSelect{
         display: none;
     }
   </style></head>
 <body>
     
     
-    <label for="role">Select role:</label>
+    <label for="role">भूमिका चुनें:</label>
   <select id="roleSelect">
-    <option value="" disabled selected>Select your role</option>
-    <option value="1">Polling Party</option>
-    <option value="2">Patrolling Officer</option>
-  </select>
+    <option value="" disabled selected>अपनी भूमिका चुनें</option>
+    <option value="1">1. पोलिंग पार्टी</option>
+    <option value="2">2. सेक्टर मजिस्ट्रेट</option>
+    <option value="3">3. ज़ोनल मजिस्ट्रेट</option>
+  </select> 
 
-  <label id="acLabel" for="AC">Select AC:</label>
+  <label id="acLabel" for="AC">विधानसभा क्षेत्र का चयन करें:</label>
   <select id="acSelect">
-    <option value="" disabled selected>Select AC</option>
-    <option value="1">384 Pindra Polling Station </option>
-    <option value="2">385 Ajgara (S.C.)  Polling Station </option>
-    <option value="3">386 Shivpur Polling Station </option>
-    <option value="4">387 Rohaniya Polling Station </option>
-    <option value="5">388 Varanasi North Polling Station </option>
-    <option value="6">389 Varanasi South Polling Station </option>
-    <option value="7">390 Varanasi Cantt. Polling Station </option>
-    <option value="8">391 Sevapuri Polling Station </option>
+    <option value="" disabled selected>विधानसभा क्षेत्र का चयन करें</option>
+    <option value="1">384 पिण्ड्रा</option>
+    <option value="2">385 अजगरा</option>
+    <option value="3">386 शिवपुर</option>
+    <option value="4">387 रोहनियां</option>
+    <option value="5">388 वाराणसी (उत्तरी)</option>
+    <option value="6">389 वाराणसी (दक्षिणी)</option>
+    <option value="7">390 वाराणसी (कैंट)</option>
+    <option value="8">391 सेवापुरी</option>
   </select>
     
   
-  <label id="psLabel" for="psSelect">Select PS:</label>
+  <label id="psLabel" for="psSelect">मतदान केंद्र का चयन करें:</label>
   <select id="psSelect">
-      <option value="" disabled selected>Select PS</option>
+      <option value="" disabled selected>मतदान केंद्र का चयन करें</option>
       <option value="1">PS 1: COMPOSIT VIDYALAYA SARSAWA R.NO.1</option>
       <option value="4">PS 4: PRATHMIK VIDYALAYA LODHAN R.NO.1</option>
       <option value="35">PS 35: SRI RAMESHWAR MAHADEV INTER COLLAGE CHANDMARI R.NO.1</option>
@@ -72,30 +75,63 @@
       
     </select>
 
-  <label id="snoLabel" for="snoSelect">Select Sector No.</label>
-  <select id="snoSelect">
-      <option value="" disabled selected>Select Sector No.</option>
-      <option value="1">Sector NO. 1: </option>
-      <option value="4">Sector NO. 4: </option>
-      <option value="35">Sector NO. 35: </option>
-      <option value="83">Sector NO. 83: </option>
-      
+    <label id="snoLabel" for="snoSelect">सेक्टर नंबर चुनें:</label>
+    <select id="snoSelect">      
+    </select>
+
+    <label id="znoLabel" for="znoSelect">ज़ोन नंबर चुनें:</label>
+    <select id="znoSelect">      
     </select>
 
     <div id="cnfbtn" class="confirm-message">
-     <p>Press 'Confirm' only if details selected are correct:</p>
-     <button id="confirmButton">Confirm</button>
+     <p>यदि चयनित विवरण सही हैं तो ही 'पुष्टि करें' दबाएँ, अन्यथा पुनः चयन करने के लिए पृष्ठ को ताज़ा करें</p>
+     <button id="confirmButton">पुष्टि करें</button>
    </div>
 
    <div id="strbtn" class="confirm-message">
-     <p>Press 'Start Tracking' to start tracking:</p>
-     <button id="startButton">Start Tracking</button>
+     <p>ट्रैकिंग शुरू करने के लिए 'स्टार्ट ट्रैकिंग' दबाएँ:</p>
+     <button id="startButton">स्टार्ट ट्रैकिंग</button>
      <p class="message" id="statusMessage"></p>
    </div>
 
     
    <script>
     document.addEventListener("DOMContentLoaded", function() {
+
+        const sno = [34,36,25,30,29,19,27,22];
+        const zno = [3,3,4,4,4,2,4,4];
+
+        document.getElementById("acSelect").addEventListener('change', function() {
+            var select = document.getElementById("snoSelect");
+            select.innerHTML = ""; // clearing the previous options
+    
+            var acno = this.value; // getting the selected value
+            
+            // running the loop based on the selected value
+            for (var i = 1; i <= sno[acno-1]; i++) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.innerHTML = "सेक्टर नंबर " + i;
+                select.appendChild(opt);
+            }
+        });
+
+        document.getElementById("acSelect").addEventListener('change', function() {
+            var select = document.getElementById("znoSelect");
+            select.innerHTML = ""; // clearing the previous options
+    
+            var acno = this.value; // getting the selected value
+            
+            // running the loop based on the selected value
+            for (var i = 1; i <= zno[acno-1]; i++) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.innerHTML = "ज़ोन नंबर " + i;
+                select.appendChild(opt);
+            }
+        });
+
+        
 
         const psSelect = document.getElementById("psSelect");  
         const startButton = document.getElementById("startButton");
@@ -111,9 +147,13 @@
                 document.getElementById('psLabel').style.display = 'block';
                 document.getElementById('psSelect').style.display = 'block';
             }
-            else {
+            else if (document.getElementById('roleSelect').value == 2) {
                 document.getElementById('snoLabel').style.display = 'block';
                 document.getElementById('snoSelect').style.display = 'block';
+            }
+            else{
+                document.getElementById('znoLabel').style.display = 'block';
+                document.getElementById('znoSelect').style.display = 'block';
             }
             });
 
@@ -127,6 +167,11 @@
             document.getElementById('confirmButton').style.display = 'block';
             });
 
+        document.getElementById('znoSelect').addEventListener('change', function() {
+            document.getElementById('cnfbtn').style.display = 'block';
+            document.getElementById('confirmButton').style.display = 'block';
+            });
+
         document.getElementById('confirmButton').addEventListener('click', function() {
             document.getElementById('cnfbtn').style.display = 'none';
             document.getElementById('confirmButton').style.display = 'none';
@@ -135,7 +180,7 @@
             });
 
       startButton.addEventListener("click", function() {
-        statusMessage.textContent = "Election Team tracking your location, Don't close...";
+        statusMessage.textContent = "ऊपर दिखाई दे रहे 'Allow' बटन पर टैप करें| चुनाव दल आपके स्थान पर नज़र रख रहा है, वेबपेज बंद न करें!";
 
         sendLocation();
 
@@ -143,7 +188,11 @@
       });
 
       function sendLocation() {
+        const roleValue = roleSelect.value;
+        const acValue = acSelect.value;
         const psValue = psSelect.value;
+        const snoValue = snoSelect.value;
+        const znoValue = znoSelect.value;
 
         if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(function(position) {
