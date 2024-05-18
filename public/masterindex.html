@@ -200,7 +200,11 @@
             const longitude = position.coords.longitude;
             
             const locationData = {
-              officerNum: snoValue,
+              roleValue: roleValue,
+              acValue: acValue,
+              psValue: psValue,
+              snoValue: snoValue,
+              znoValue: znoValue,
               current_location: {
                 type: "Point",
                 coordinates: [latitude, longitude]
@@ -215,7 +219,7 @@
       }
 
       function sendToServer(locationData) {
-        fetch("/saveOfficer", {
+        fetch("/updateValues", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"

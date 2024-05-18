@@ -4,7 +4,9 @@
   "description": "",
   "main": "betaserver.js",
   "scripts": {
-    "start": "node betaserver.js"
+    "start": "node betaserver.js",
+    "trial": "node datasaver.js",
+    "smserver": "node smserver.js"
   },
   "keywords": [],
   "author": "",

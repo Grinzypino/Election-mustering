@@ -12,9 +12,10 @@ const MONGODB_URI = 'mongodb+srv://electionbackend:ePwDnqXF3GNzmwCc@election.pta
 // Define a schema for officer data
 const officerSchema = new mongoose.Schema({
   officerNum: String,
-  officerName: String,
   current_location: String,
-  earlier_location: String
+  before30mins_location: String,
+  earlier_locations: Array,
+  isTime: Number
 });
 
 // Create a Mongoose model from the schema
@@ -30,7 +31,7 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
   });
 
 const server = http.createServer((req, res) => {
-  if (req.method === 'POST' && req.url === '/saveOfficer') {
+  if (req.method === 'POST' && req.url === '/updateValues') {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk.toString();
@@ -42,16 +43,32 @@ const server = http.createServer((req, res) => {
       console.log('Received officer data:', officerData);
 
       // Ensure officerNum and current_location are strings
-      const officerNum = String(officerData.officerNum);
+      const roleValue= String(officerData.roleValue);
+      const acValue= String(officerData.acValue);
+      const psValue= String(officerData.psValue);
+      const snoValue= String(officerData.snoValue);
+      const znoValue= String(officerData.znoValue);
       const current_location = String(officerData.current_location.coordinates);
+      // const officerNum = roleValue + acValue + psValue + snoValue + znoValue;
 
       // Find the existing officer document for the selected officer
+      if(roleValue === '2')
+      {
+       const officerNum = roleValue + acValue + snoValue;
        Officer.findOne({ officerNum: officerNum })
         .then((existingOfficer) => {
           if (existingOfficer) {
-            // Update the existing document with new current_location
+            // Update the existing document 
             console.log(existingOfficer.current_location);
             existingOfficer.current_location = current_location;
+            if(existingOfficer.isTime == 30){
+              existingOfficer.earlier_locations.push(current_location);
+              existingOfficer.before30mins_location = existingOfficer.earlier_locations.shift();
+            }else{
+              existingOfficer.isTime += 1;
+              existingOfficer.earlier_locations.push(current_location);
+              existingOfficer.before30mins_location = existingOfficer.earlier_locations[0];
+            }
              return existingOfficer.save()
               .then(() => {
                 console.log('current location data updated');
@@ -60,11 +77,14 @@ const server = http.createServer((req, res) => {
               });
           } else {
             // No existing document found, create a new one
-            const newLocation = new Location({
-              PSnum: PSnum,
-              current_location: current_location
+            const newOfficer = new Officer({
+              officerNum: officerNum,
+              current_location: current_location,
+              before30mins_location: current_location,
+              earlier_locations: [current_location],
+              isTime: 0
             });
-            return newLocation.save();
+            return newOfficer.save();
           }
         })
         .catch((err) => {
@@ -72,10 +92,11 @@ const server = http.createServer((req, res) => {
           res.writeHead(500, { 'Content-Type': 'text/plain' });
           res.end('Internal Server Error');
         });
+      }
     });
-  } else if (req.url === '/' || req.url === '/index.html') {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    fs.readFile("./public/index.html", (err, data) => {
+  } else if (req.url === '/' || req.url === '/masterindex.html') {
+    const masterindexPath = path.join(__dirname, 'public', 'masterindex.html');
+    fs.readFile(masterindexPath, (err, data) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
@@ -84,10 +105,10 @@ const server = http.createServer((req, res) => {
         res.end(data);
       }
     });
-  } else if (req.url === '/dashboard') {
-    // Serve dashboard.html
-    const dashboardPath = path.join(__dirname, 'public', 'dashboard.html');
-    fs.readFile(dashboardPath, (err, data) => {
+  } else if (req.url === '/smdashboard') {
+    // Serve smdashboard.html
+    const smdashboardPath = path.join(__dirname, 'public', 'smdashboard.html');
+    fs.readFile(smdashboardPath, (err, data) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
@@ -96,27 +117,27 @@ const server = http.createServer((req, res) => {
         res.end(data);
       }
     });
-  } else if (req.url === '/getPSLocations') {
-    // Fetch all PS locations
-    Location.find({})
-      .then((locations) => {
+  } else if (req.url === '/getSMLocations') {
+    // Fetch all officers
+    Officer.find({})
+      .then((allofficers) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(locations));
+        res.end(JSON.stringify(allofficers));
       })
       .catch((err) => {
-        console.error('Error fetching PS locations:', err);
+        console.error('Error fetching all officers data:', err);
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
       });
-  }else if(req.url === '/dashboard2') {
-    // Retrieve all documents from the PSLocations collection
-    Location.find({})
-      .then((locations) => {
+  }else if(req.url === '/smdashboard2') {
+    // Retrieve all documents from the officers collection
+    Officer.find({})
+      .then((allofficer) => {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end(JSON.stringify(locations, null, 2));
+        res.end(JSON.stringify(allofficer, null, 2));
       })
       .catch((err) => {
-        console.error('Error fetching PS locations:', err);
+        console.error('Error fetching all officer data:', err);
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
       });
