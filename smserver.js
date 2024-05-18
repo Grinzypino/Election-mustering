@@ -52,9 +52,15 @@ const server = http.createServer((req, res) => {
       // const officerNum = roleValue + acValue + psValue + snoValue + znoValue;
 
       // Find the existing officer document for the selected officer
-      if(roleValue === '2')
-      {
-       const officerNum = roleValue + acValue + snoValue;
+      
+      { 
+        var officerNum = "";
+        if(roleValue === '2'){
+          officerNum = roleValue + acValue + snoValue;
+        }
+        else if(roleValue === '3'){
+          officerNum = roleValue + acValue + znoValue;
+        }
        Officer.findOne({ officerNum: officerNum })
         .then((existingOfficer) => {
           if (existingOfficer) {

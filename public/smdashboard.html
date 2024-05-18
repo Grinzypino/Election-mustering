@@ -47,19 +47,19 @@
 </style>
 </head>
 <body>
-  <h1>Patrolling Officers - Live Location Dashboard</h1>
+  <h1>Magistrates' - Live Location Dashboard</h1>
   <div id="map"></div>
   <div id="status">
     <div class="status-box">
-      <p class="status-label">Total Officers:</p>
+      <p class="status-label">Total Magistrates:</p>
       <p id="totalOfficers">0</p>
     </div>
     <div class="status-box">
-      <p class="status-label">Patrolling Officers:</p>
+      <p class="status-label">Currently patrolling:</p>
       <p id="patrolling">0</p>
     </div>
     <div class="status-box">
-      <p class="status-label">Not Patrolling Officer:</p>
+      <p class="status-label">Currently not patrolling:</p>
       <p id="notPatrolling">0</p>
     </div>
   </div>
@@ -68,8 +68,7 @@
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       var map = L.map('map').setView([25.326875, 82.983908], 12); // set view anywhere.
-      var totalOfficers = 4; //total officers.
-      var flag = 0;
+      
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -79,12 +78,12 @@
         fetch("/smdashboard2")
           .then(response => response.json())
           .then(data => {
+            var flag = 0;
             data.forEach(location => {
-              var e_coordinates = location.earlier_location.split(',');
-              var e_latlng = [parseFloat(coordinates[0]), parseFloat(coordinates[1])];
+              var e_coordinates = location.before30mins_location.split(',');
+              var e_latlng = [parseFloat(e_coordinates[0]), parseFloat(e_coordinates[1])];
               var c_coordinates = location.current_location.split(',');
-              var c_latlng = [parseFloat(coordinates[0]), parseFloat(coordinates[1])];
-              var markerColor = 'blue'; // Default color
+              var c_latlng = [parseFloat(c_coordinates[0]), parseFloat(c_coordinates[1])];
 
               var temp = c_latlng[0];
               if (c_latlng[0] > c_latlng[1]) {
@@ -102,26 +101,24 @@
               // Calculate distance between current_location and earlier_location
               var distance = L.latLng(c_latlng).distanceTo(e_latlng);
 
-              // If within 100 meters, change color to orange
-              if (distance < 100) {
-                markerColor = 'orange';
+              // Created marker
+              var marker = L.marker(c_latlng).addTo(map);
+              
+              if (distance < 500) {
+                marker._icon.style.filter = "hue-rotate(170deg)";
                 flag++;
               }
 
-              if (markerColor === 'blue') {
+              else{
+                marker._icon.style.filter = "hue-rotate(235deg)";
               }
 
-              var marker = L.marker(latlng).addTo(map);
-              if (markerColor === 'orange') {
-                marker._icon.style.filter = "hue-rotate(120deg)";
-              }
-
-              marker.bindPopup('Officer ' + location.officerNum + '<br>Name: ' + location.officerName + '<br>Location: ' + latlng + '<br>Distance from last location: ' + distance).openPopup();
+              marker.bindPopup('Magistrate ' + location.officerNum + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
             });
 
             // Update status
-            document.getElementById('totalOfficers').textContent = totalOfficers;
-            document.getElementById('patrolling').textContent = totalOfficers - flag;
+            document.getElementById('totalOfficers').textContent = data.length;
+            document.getElementById('patrolling').textContent = data.length - flag;
             document.getElementById('notPatrolling').textContent = flag;
           })
           .catch(error => console.error("Error in fetching Officers' locations:", error));
