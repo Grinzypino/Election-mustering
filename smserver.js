@@ -12,7 +12,7 @@ const MONGODB_URI = 'mongodb+srv://electionbackend:ePwDnqXF3GNzmwCc@election.pta
 const psSchema = new mongoose.Schema({
   acPS: String,
   numPS: String,
-  namePSe: String,
+  namePSh: String,
 });
 
 // Create a Mongoose model from the schema
