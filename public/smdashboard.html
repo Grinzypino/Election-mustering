@@ -104,7 +104,7 @@
               // Created marker
               var marker = L.marker(c_latlng).addTo(map);
               
-              if (distance < 500) {
+              if (distance < 500 && location.isTime == 30) {
                 marker._icon.style.filter = "hue-rotate(170deg)";
                 flag++;
               }
@@ -112,8 +112,24 @@
               else{
                 marker._icon.style.filter = "hue-rotate(235deg)";
               }
+              
+              var role = ""
+              var ac = location.officerNum.charAt(1);
+              var num = ''
+              var numlabel = ''
 
-              marker.bindPopup('Magistrate ' + location.officerNum + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
+              if(location.officerNum.charAt(0) == '2'){
+                role = "Sector Magistrate";
+                num = location.officerNum.substring(2);
+                numlabel = "Sector Number: ";
+              }
+              else if(location.officerNum.charAt(0) == '3'){
+                role = "Zonal Magistrate";
+                num = location.officerNum.substring(2);
+                numlabel = "Zonal Number: ";
+              }              
+
+              marker.bindPopup(role + '<br>Assembly Constituency: ' + location.officerNum.charAt(1) + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
             });
 
             // Update status
