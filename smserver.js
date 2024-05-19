@@ -8,6 +8,15 @@ const PORT = process.env.PORT || 8000;
 // MongoDB connection URI
 const MONGODB_URI = 'mongodb+srv://electionbackend:ePwDnqXF3GNzmwCc@election.ptaluj8.mongodb.net/?retryWrites=true&w=majority&appName=election';
 
+// Define a schema for officer data
+const psSchema = new mongoose.Schema({
+  acPS: String,
+  numPS: String,
+  namePSe: String,
+});
+
+// Create a Mongoose model from the schema
+const ac386ps = mongoose.model('ac386ps', psSchema);
 
 // Define a schema for officer data
 const officerSchema = new mongoose.Schema({
@@ -135,7 +144,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
       });
-  }else if(req.url === '/smdashboard2') {
+  } else if(req.url === '/smdashboard2') {
     // Retrieve all documents from the officers collection
     Officer.find({})
       .then((allofficer) => {
@@ -147,7 +156,20 @@ const server = http.createServer((req, res) => {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
       });
+  }else if(req.url === '/ac386ps') {
+    // Retrieve all documents from the pslocations collection
+    ac386ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
     }
+
    else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('404 Not Found');

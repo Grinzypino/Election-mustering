@@ -47,7 +47,7 @@
 </style>
 </head>
 <body>
-  <h1>Magistrates' - Live Location Dashboard</h1>
+  <h1>Live Location Dashboard</h1>
   <div id="map"></div>
   <div id="status">
     <div class="status-box">
@@ -61,6 +61,18 @@
     <div class="status-box">
       <p class="status-label">Currently not patrolling:</p>
       <p id="notPatrolling">0</p>
+    </div>
+    <div class="status-box">
+      <p class="status-label">Total Polling Parties:</p>
+      <p id="totalPS">0</p>
+    </div>
+    <div class="status-box">
+      <p class="status-label">PP reached:</p>
+      <p id="reachedPS">0</p>
+    </div>
+    <div class="status-box">
+      <p class="status-label">PP not reached:</p>
+      <p id="notReachedPS">0</p>
     </div>
   </div>
 
@@ -114,10 +126,9 @@
               }
               
               var role = ""
-              var ac = location.officerNum.charAt(1);
               var num = ''
               var numlabel = ''
-
+              
               if(location.officerNum.charAt(0) == '2'){
                 role = "Sector Magistrate";
                 num = location.officerNum.substring(2);
@@ -128,8 +139,13 @@
                 num = location.officerNum.substring(2);
                 numlabel = "Zonal Number: ";
               }              
+              
+              var ac = location.officerNum.charAt(1);
+              var acNumber = Number(ac); 
+              var newNumber = acNumber + 383; 
+              var newAc = newNumber.toString(); 
 
-              marker.bindPopup(role + '<br>Assembly Constituency: ' + location.officerNum.charAt(1) + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
+              marker.bindPopup(role + '<br>Assembly Constituency: ' + newAc + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
             });
 
             // Update status

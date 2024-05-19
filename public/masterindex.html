@@ -68,10 +68,6 @@
   <label id="psLabel" for="psSelect">मतदान केंद्र का चयन करें:</label>
   <select id="psSelect">
       <option value="" disabled selected>मतदान केंद्र का चयन करें</option>
-      <option value="1">PS 1: COMPOSIT VIDYALAYA SARSAWA R.NO.1</option>
-      <option value="4">PS 4: PRATHMIK VIDYALAYA LODHAN R.NO.1</option>
-      <option value="35">PS 35: SRI RAMESHWAR MAHADEV INTER COLLAGE CHANDMARI R.NO.1</option>
-      <option value="83">PS 83: PRATHMIK VIDYALAYA DHOORIPUR R.NO.- 1</option>
       
     </select>
 
@@ -84,7 +80,7 @@
     </select>
 
     <div id="cnfbtn" class="confirm-message">
-     <p>यदि चयनित विवरण सही हैं तो ही 'पुष्टि करें' दबाएँ, अन्यथा पुनः चयन करने के लिए पृष्ठ को ताज़ा करें</p>
+     <p>यदि चयनित विवरण सही हैं तो ही 'पुष्टि करें' दबाएँ, अन्यथा पुनः चयन करने के लिए पृष्ठ को ताज़ा (Refresh) करें</p>
      <button id="confirmButton">पुष्टि करें</button>
    </div>
 
@@ -98,6 +94,32 @@
    <script>
     document.addEventListener("DOMContentLoaded", function() {
 
+        document.getElementById("acSelect").addEventListener('change', function() {
+
+          var acNum = this.value;
+          if(acNum == '3')
+          {
+            fetch("/ac386ps")
+            .then(response => response.json())
+            .then(data => {
+
+              var psSelect = document.getElementById('psSelect');
+
+              data.forEach(location => {
+                if(location.acPS == 386)
+                {
+                  var psOption = document.createElement('option');
+                  psOption.value = location.numPS;
+                  psOption.textContent = location.numPS + " - " + location.namePSe;
+                  psSelect.appendChild(psOption);
+                }
+              });
+            })
+            .catch(error => console.error('Error:', error));
+          }
+        });  
+
+
         const sno = [34,36,25,30,29,19,27,22];
         const zno = [3,3,4,4,4,2,4,4];
 
@@ -106,6 +128,11 @@
             select.innerHTML = ""; // clearing the previous options
     
             var acno = this.value; // getting the selected value
+
+            var defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.text = "सेक्टर नंबर चुनें";
+            select.appendChild(defaultOption);
             
             // running the loop based on the selected value
             for (var i = 1; i <= sno[acno-1]; i++) {
@@ -114,13 +141,18 @@
                 opt.innerHTML = "सेक्टर नंबर " + i;
                 select.appendChild(opt);
             }
-        });
+        });        
 
         document.getElementById("acSelect").addEventListener('change', function() {
             var select = document.getElementById("znoSelect");
             select.innerHTML = ""; // clearing the previous options
     
             var acno = this.value; // getting the selected value
+
+            var defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.text = "ज़ोन नंबर चुनें";
+            select.appendChild(defaultOption);
             
             // running the loop based on the selected value
             for (var i = 1; i <= zno[acno-1]; i++) {
