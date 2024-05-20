@@ -64,15 +64,15 @@
     </div>
     <div class="status-box">
       <p class="status-label">Total Polling Parties:</p>
-      <p id="totalPS">0</p>
+      <p id="totalPP">0</p>
     </div>
     <div class="status-box">
-      <p class="status-label">PP reached:</p>
+      <p class="status-label">Polling station reached:</p>
       <p id="reachedPS">0</p>
     </div>
     <div class="status-box">
-      <p class="status-label">PP not reached:</p>
-      <p id="notReachedPS">0</p>
+      <p class="status-label">Polling parties not moving:</p>
+      <p id="PPstuck">0</p>
     </div>
   </div>
 
@@ -88,70 +88,108 @@
 
       function fetchAndDisplayLocations() {
         fetch("/smdashboard2")
-          .then(response => response.json())
-          .then(data => {
-            var flag = 0;
-            data.forEach(location => {
-              var e_coordinates = location.before30mins_location.split(',');
-              var e_latlng = [parseFloat(e_coordinates[0]), parseFloat(e_coordinates[1])];
-              var c_coordinates = location.current_location.split(',');
-              var c_latlng = [parseFloat(c_coordinates[0]), parseFloat(c_coordinates[1])];
+        .then(response => response.json())
+        .then(data => {
+          var totalPP = 0;
+          var totalMagistrates = 0;
+          var noP = 0;
+          var PPstuck = 0;
+          var reached = 0;
+          data.forEach(officers => {
 
-              var temp = c_latlng[0];
-              if (c_latlng[0] > c_latlng[1]) {
-                temp = c_latlng[0];
-                c_latlng[0] = c_latlng[1];
-                c_latlng[1] = temp;
-              }
+            console.log(officers);
+            console.log(officers.before30mins_location);
+            var e_coordinates = officers.before30mins_location.split(',');
+            var e_latlng = [parseFloat(e_coordinates[0]), parseFloat(e_coordinates[1])];
+            var c_coordinates = officers.current_location.split(',');
+            var c_latlng = [parseFloat(c_coordinates[0]), parseFloat(c_coordinates[1])];
+            var temp = c_latlng[0]; //swapping if not in order
+            if (c_latlng[0] > c_latlng[1]) {
+              temp = c_latlng[0];
+              c_latlng[0] = c_latlng[1];
+              c_latlng[1] = temp;
+            }
+            
+            if (e_latlng[0] > e_latlng[1]) {
               temp = e_latlng[0];
-              if (e_latlng[0] > e_latlng[1]) {
-                temp = e_latlng[0];
-                e_latlng[0] = e_latlng[1];
-                e_latlng[1] = temp;
-              }
+              e_latlng[0] = e_latlng[1];
+              e_latlng[1] = temp;
+            }
 
+            var num = officers.officerNum.substring(2); //PSnum / sno. / zno.
+            var roleValue = officers.officerNum.charAt(0); //type of officer
+            var ac = officers.officerNum.charAt(1);
+            var acNumber = Number(ac); 
+            var newNumber = acNumber + 383; 
+            var newAc = newNumber.toString(); // Assembly Constituency Number
+
+            // Calculating distance left
+            var psdistance = 0;// distance from polling station
+
+            if (roleValue == '1') {
+              var ps_coordinates = officers.ps_location.split(',');
+              var ps_latlng = [parseFloat(ps_coordinates[0]), parseFloat(ps_coordinates[1])];
+              psdistance = L.latLng(c_latlng).distanceTo(ps_latlng);    
+            }
+              
+
+              
               // Calculate distance between current_location and earlier_location
               var distance = L.latLng(c_latlng).distanceTo(e_latlng);
-
-              // Created marker
               var marker = L.marker(c_latlng).addTo(map);
               
-              if (distance < 500 && location.isTime == 30) {
-                marker._icon.style.filter = "hue-rotate(170deg)";
-                flag++;
-              }
-
-              else{
-                marker._icon.style.filter = "hue-rotate(235deg)";
+              if(roleValue == '1'){
+                if(psdistance < 500){
+                  marker._icon.style.filter = "hue-rotate(30deg)"; //purple for reaching
+                  reached++;
+                }else{
+                  if(distance < 500 && officers.isTime == 30){
+                    marker._icon.style.filter = "hue-rotate(188deg)";//orange for stuck
+                    PPstuck++;
+                  }else{
+                    marker._icon.style.filter = "hue-rotate(0deg)";// blue for on the way
+                  }
+                }
+              } else {
+                if(distance < 500 && officers.isTime == 30){
+                  marker._icon.style.filter = "hue-rotate(120deg)";// red for no patrolling
+                  noP++;
+                }else{
+                  marker._icon.style.filter = "hue-rotate(250deg)";// green for patrolling
+                }
               }
               
               var role = ""
-              var num = ''
               var numlabel = ''
-              
-              if(location.officerNum.charAt(0) == '2'){
+              if(officers.officerNum.charAt(0) == '2'){
                 role = "Sector Magistrate";
-                num = location.officerNum.substring(2);
                 numlabel = "Sector Number: ";
-              }
-              else if(location.officerNum.charAt(0) == '3'){
+                totalMagistrates++;
+              }else if(officers.officerNum.charAt(0) == '3'){
                 role = "Zonal Magistrate";
-                num = location.officerNum.substring(2);
                 numlabel = "Zonal Number: ";
+                totalMagistrates++;
+              }else{
+                role = "Polling Party";
+                numlabel = "PS Num: ";
+                totalPP++;
               }              
-              
-              var ac = location.officerNum.charAt(1);
-              var acNumber = Number(ac); 
-              var newNumber = acNumber + 383; 
-              var newAc = newNumber.toString(); 
-
-              marker.bindPopup(role + '<br>Assembly Constituency: ' + newAc + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
+            
+              if(roleValue == '1'){
+                marker.bindPopup(role + '<br>Assembly Constituency: ' + newAc + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from PS: ' + psdistance + '<br>Distance from last location: ' + distance).openPopup();
+              }
+              else{
+                marker.bindPopup(role + '<br>Assembly Constituency: ' + newAc + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
+              }
             });
 
             // Update status
-            document.getElementById('totalOfficers').textContent = data.length;
-            document.getElementById('patrolling').textContent = data.length - flag;
-            document.getElementById('notPatrolling').textContent = flag;
+            document.getElementById('totalOfficers').textContent = totalMagistrates;
+            document.getElementById('patrolling').textContent = totalMagistrates - noP;
+            document.getElementById('notPatrolling').textContent = noP;
+            document.getElementById('totalPP').textContent = totalPP;
+            document.getElementById('reachedPS').textContent = reached;
+            document.getElementById('PPstuck').textContent = PPstuck;
           })
           .catch(error => console.error("Error in fetching Officers' locations:", error));
       }

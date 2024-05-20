@@ -8,23 +8,33 @@ const PORT = process.env.PORT || 8000;
 // MongoDB connection URI
 const MONGODB_URI = 'mongodb+srv://electionbackend:ePwDnqXF3GNzmwCc@election.ptaluj8.mongodb.net/?retryWrites=true&w=majority&appName=election';
 
-// Define a schema for officer data
+// Defined a schema for polling station data
 const psSchema = new mongoose.Schema({
   acPS: String,
   numPS: String,
   namePSh: String,
+  latPS: Number,
+  longPS: Number
 });
 
-// Create a Mongoose model from the schema
+// Created Mongoose model from the schema
+const ac384ps = mongoose.model('ac384ps', psSchema);
+const ac385ps = mongoose.model('ac385ps', psSchema);
 const ac386ps = mongoose.model('ac386ps', psSchema);
+const ac387ps = mongoose.model('ac387ps', psSchema);
+const ac388ps = mongoose.model('ac388ps', psSchema);
+const ac389ps = mongoose.model('ac389ps', psSchema);
+const ac390ps = mongoose.model('ac390ps', psSchema);
+const ac391ps = mongoose.model('ac391ps', psSchema);
 
-// Define a schema for officer data
+// Defined a schema for officer data
 const officerSchema = new mongoose.Schema({
   officerNum: String,
   current_location: String,
   before30mins_location: String,
   earlier_locations: Array,
-  isTime: Number
+  isTime: Number,
+  ps_location: String
 });
 
 // Create a Mongoose model from the schema
@@ -58,6 +68,7 @@ const server = http.createServer((req, res) => {
       const snoValue= String(officerData.snoValue);
       const znoValue= String(officerData.znoValue);
       const current_location = String(officerData.current_location.coordinates);
+      const ps_location = String(officerData.ps_location.coordinates);
       // const officerNum = roleValue + acValue + psValue + snoValue + znoValue;
 
       // Find the existing officer document for the selected officer
@@ -69,6 +80,9 @@ const server = http.createServer((req, res) => {
         }
         else if(roleValue === '3'){
           officerNum = roleValue + acValue + znoValue;
+        }
+        else if(roleValue === '1'){
+          officerNum = roleValue + acValue + psValue;
         }
        Officer.findOne({ officerNum: officerNum })
         .then((existingOfficer) => {
@@ -97,7 +111,8 @@ const server = http.createServer((req, res) => {
               current_location: current_location,
               before30mins_location: current_location,
               earlier_locations: [current_location],
-              isTime: 0
+              isTime: 0,
+              ps_location: ps_location
             });
             return newOfficer.save();
           }
@@ -112,6 +127,18 @@ const server = http.createServer((req, res) => {
   } else if (req.url === '/' || req.url === '/masterindex.html') {
     const masterindexPath = path.join(__dirname, 'public', 'masterindex.html');
     fs.readFile(masterindexPath, (err, data) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      } else {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(data);
+      }
+    });
+  } else if (req.url === '/psdashboard') {
+    // Serve psdashboard.html
+    const smdashboardPath = path.join(__dirname, 'public', 'psdashboard.html');
+    fs.readFile(smdashboardPath, (err, data) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
@@ -156,6 +183,30 @@ const server = http.createServer((req, res) => {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
       });
+  }else if(req.url === '/ac384ps') {
+    // Retrieve all documents from the pslocations collection
+    ac384ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
+  }else if(req.url === '/ac385ps') {
+    // Retrieve all documents from the pslocations collection
+    ac385ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
   }else if(req.url === '/ac386ps') {
     // Retrieve all documents from the pslocations collection
     ac386ps.find({})
@@ -168,9 +219,67 @@ const server = http.createServer((req, res) => {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
       });
-    }
-
-   else {
+  }else if(req.url === '/ac387ps') {
+    // Retrieve all documents from the pslocations collection
+    ac387ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
+  }else if(req.url === '/ac388ps') {
+    // Retrieve all documents from the pslocations collection
+    ac388ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
+  }else if(req.url === '/ac389ps') {
+    // Retrieve all documents from the pslocations collection
+    ac389ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
+  }else if(req.url === '/ac390ps') {
+    // Retrieve all documents from the pslocations collection
+    ac390ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
+  }else if(req.url === '/ac391ps') {
+    // Retrieve all documents from the pslocations collection
+    ac391ps.find({})
+      .then((allps) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(JSON.stringify(allps, null, 2));
+      })
+      .catch((err) => {
+        console.error('Error fetching all ps of ac 386:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      });
+  } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('404 Not Found');
   }

@@ -97,26 +97,30 @@
         document.getElementById("acSelect").addEventListener('change', function() {
 
           var acNum = this.value;
-          if(acNum == '3')
-          {
-            fetch("/ac386ps")
-            .then(response => response.json())
-            .then(data => {
+          var acNumber = Number(acNum); 
+          var newNumber = acNumber + 383; 
+          var newAc = newNumber.toString();
+          var fetchlink = "ac" + newAc + "ps";
+          
+          fetch(fetchlink)
+          .then(response => response.json())
+          .then(data => {
 
-              var psSelect = document.getElementById('psSelect');
+            var psSelect = document.getElementById('psSelect');
 
-              data.forEach(location => {
-                if(location.acPS == 386)
-                {
-                  var psOption = document.createElement('option');
-                  psOption.value = location.numPS;
-                  psOption.textContent = location.numPS + " - " + location.namePSh;
-                  psSelect.appendChild(psOption);
-                }
-              });
-            })
-            .catch(error => console.error('Error:', error));
-          }
+            data.forEach(location => {
+              
+              var psOption = document.createElement('option');
+              psOption.value = location.numPS;
+              psOption.setAttribute('data-latPS', location.latPS);
+              psOption.setAttribute('data-longPS', location.longPS);
+              psOption.textContent = location.numPS + " - " + location.namePSh;
+              psSelect.appendChild(psOption);
+              
+            });
+          })
+          .catch(error => console.error('Error:', error));
+          
         });  
 
 
@@ -225,6 +229,9 @@
         const psValue = psSelect.value;
         const snoValue = snoSelect.value;
         const znoValue = znoSelect.value;
+        const selectedOption = document.getElementById('psSelect').selectedOptions[0];
+        const latPS = parseFloat(selectedOption.getAttribute('data-latPS'));
+        const longPS = parseFloat(selectedOption.getAttribute('data-longPS'));
 
         if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(function(position) {
@@ -240,9 +247,13 @@
               current_location: {
                 type: "Point",
                 coordinates: [latitude, longitude]
+              },
+              ps_location: {
+                type: "Point",
+                coordinates: [latPS, longPS]
               }
             };
-
+            console.log(locationData);
             sendToServer(locationData);
           }, showError);
         } else {
