@@ -23,6 +23,8 @@
   }
 
   #status {
+    display:flex;
+    justify-content: center;
     text-align: center;
     margin-top: 20px;
   }
@@ -44,43 +46,195 @@
   .huechange {
     filter: hue-rotate(190deg);
   }
+
+  button {
+    font-size: 16px;
+    padding: 8px;
+    border: 1px solid #ccc;
+  }
+
+  #acSelect, #psSelect {
+    display: inline-block;
+    font-size: 16px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  #acSelect {
+    margin-top: 10px;
+  }
+  #ppb {
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 6px;  
+  }
+  #magb {
+    background-color: #28a745;
+    color: #fff;
+    border-radius: 6px;
+  }
+  #mag1, #mag2, #mag3, #pp {
+    display: none;
+  }
+  #pol1, #pol2, #pol3, #mag {
+    display: inline-block;
+  }
+  
 </style>
 </head>
 <body>
-  <h1>Live Location Dashboard</h1>
+  <h1>लाइव लोकेशन डैशबोर्ड</h1>
   <div id="map"></div>
   <div id="status">
     <div class="status-box">
-      <p class="status-label">Total Magistrates:</p>
+      <p class="status-label">द्वारा देखें:</p>
+      <div id="mag" class="btn">
+        <button id="magb">मजिस्ट्रेट</button>
+      </div>
+      <div id="pp" class="btn">
+        <button id="ppb">पोलिंग पार्टी</button>
+      </div>
+      <select id="acSelect">   
+        <option value="" disabled selected>विधानसभा क्षेत्र का चयन करें:</option>
+        <option value="0">सभी विधानसभा क्षेत्र</option>
+        <option value="1">384 पिण्ड्रा</option>
+        <option value="2">385 अजगरा</option>
+        <option value="3">386 शिवपुर</option>
+        <option value="4">387 रोहनियां</option>
+        <option value="5">388 वाराणसी (उत्तरी)</option>
+        <option value="6">389 वाराणसी (दक्षिणी)</option>
+        <option value="7">390 वाराणसी (कैंट)</option>
+        <option value="8">391 सेवापुरी</option>   
+    </select>
+    <select id="psSelect">   
+      <option value="" disabled selected>मतदान केंद्र का चयन करें:</option>  
+  </select>
+    </div>
+    <div id='mag1' class="status-box">
+      <p class="status-label">कुल मजिस्ट्रेट:</p>
       <p id="totalOfficers">0</p>
     </div>
-    <div class="status-box">
-      <p class="status-label">Currently patrolling:</p>
+    <div id='mag2' class="status-box">
+      <p class="status-label">मजिस्ट्रेट घूम रहे:</p>
       <p id="patrolling">0</p>
     </div>
-    <div class="status-box">
-      <p class="status-label">Currently not patrolling:</p>
+    <div id='mag3' class="status-box">
+      <p class="status-label">मजिस्ट्रेट नहीं घूम रहे:</p>
       <p id="notPatrolling">0</p>
     </div>
-    <div class="status-box">
-      <p class="status-label">Total Polling Parties:</p>
+    <div id='pol1' class="status-box">
+      <p class="status-label">कुल पोलिंग पार्टी:</p>
       <p id="totalPP">0</p>
     </div>
-    <div class="status-box">
-      <p class="status-label">Polling station reached:</p>
+    <div id='pol2' class="status-box">
+      <p class="status-label">पोलिंग पार्टी पहुंची:</p>
       <p id="reachedPS">0</p>
     </div>
-    <div class="status-box">
-      <p class="status-label">Polling parties not moving:</p>
+    <div id='pol3' class="status-box">
+      <p class="status-label">पोलिंग पार्टी नहीं पहुंची:</p>
       <p id="PPstuck">0</p>
+    </div>
+    <div class="status-box">
+      <p style="color: #026dd9">पोलिंग पार्टी चल रही</p>
+      <p style="color: #624ccf">पोलिंग पार्टी पहुंच गई</p>
+      <p style="color: #ad6800">पोलिंग पार्टी रुक गई</p>
+    </div>
+    <div class="status-box">
+      <p style="color: #1c8723">मजिस्ट्रेट घूम रहे</p>
+      <p style="color: #cc2193">मजिस्ट्रेट नहीं घूम रहे</p>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      var map = L.map('map').setView([25.326875, 82.983908], 12); // set view anywhere.
+
+      document.getElementById("ppb").addEventListener('click', function() {
+        document.getElementById("mag").style.display = "inline-block";
+        document.getElementById("pp").style.display = "none";
+        document.getElementById("mag1").style.display = "none";
+        document.getElementById("mag2").style.display = "none";
+        document.getElementById("mag3").style.display = "none";
+        document.getElementById("pol1").style.display = "inline-block";
+        document.getElementById("pol2").style.display = "inline-block";
+        document.getElementById("pol3").style.display = "inline-block";
+      });
+
+      document.getElementById("magb").addEventListener('click', function() {
+        document.getElementById("mag").style.display = "none";
+        document.getElementById("pp").style.display = "inline-block";
+        document.getElementById("mag1").style.display = "inline-block";
+        document.getElementById("mag2").style.display = "inline-block";
+        document.getElementById("mag3").style.display = "inline-block";
+        document.getElementById("pol1").style.display = "none";
+        document.getElementById("pol2").style.display = "none";
+        document.getElementById("pol3").style.display = "none";
+      });
+
+      //Map view
+      const aclat = [25.397507, 25.500721, 25.469411, 25.400209, 25.265353, 25.384102, 25.334200, 25.289926, 25.312165];
+      const aclong = [82.895525, 82.828847, 82.953815, 83.086487, 82.926990, 82.967776, 83.021737, 82.992881, 82.762842];
+      //default values of map view:
+      var aclatvalue = 25.326875;
+      var aclongvalue = 82.983908;
+      var map = L.map('map').setView([aclatvalue, aclongvalue], 12); // set view anywhere.
+
+      document.getElementById("acSelect").addEventListener('change', function() {
+
+        var acNum = this.value;
+        var acNumber = Number(acNum); 
+        var newNumber = acNumber + 383; 
+        var newAc = newNumber.toString();
+        var fetchlink = "ac" + newAc + "ps";
+
+        //selecting viewing cooridnates for the map:
+        console.log(aclat[acNumber], aclong[acNumber],);
+        aclatvalue = aclat[acNumber];
+        aclongvalue = aclong[acNumber];
+        map.setView([aclatvalue, aclongvalue], 12)
+
+        //fetching polling stations
+        fetch(fetchlink)
+        .then(response => response.json())
+        .then(data => {
+
+          var psSelect = document.getElementById('psSelect');
+
+          data.forEach(location => {
+            
+            var psOption = document.createElement('option');
+            psOption.value = location.numPS;
+            psOption.setAttribute('data-latPS', location.latPS);
+            psOption.setAttribute('data-longPS', location.longPS);
+            psOption.textContent = location.numPS + " - " + location.namePSh;
+            psSelect.appendChild(psOption);
+            
+          });
+        })
+        .catch(error => console.error('Error:', error));
+        
+      });
       
+      let PSmarker;
+
+      document.getElementById("psSelect").addEventListener('change', function() {
+        const selectedOption = document.getElementById('psSelect').selectedOptions[0];
+        const latPS = parseFloat(selectedOption.getAttribute('data-latPS'));
+        const longPS = parseFloat(selectedOption.getAttribute('data-longPS'));
+        const latlngPS = [latPS, longPS];
+        map.setView([latPS, longPS], 16);
+
+        // If PSmarker exists, remove it from the map
+        if (PSmarker) {
+          map.removeLayer(PSmarker);
+        }
+
+        // Add a new marker for the selected PS
+        PSmarker = L.marker(latlngPS).addTo(map);
+        PSmarker._icon.style.filter = "hue-rotate(30deg)";
+      });
+
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -97,8 +251,6 @@
           var reached = 0;
           data.forEach(officers => {
 
-            console.log(officers);
-            console.log(officers.before30mins_location);
             var e_coordinates = officers.before30mins_location.split(',');
             var e_latlng = [parseFloat(e_coordinates[0]), parseFloat(e_coordinates[1])];
             var c_coordinates = officers.current_location.split(',');
@@ -147,7 +299,7 @@
                     marker._icon.style.filter = "hue-rotate(188deg)";//orange for stuck
                     PPstuck++;
                   }else{
-                    marker._icon.style.filter = "hue-rotate(0deg)";// blue for on the way
+                    marker._icon.style.filter = "hue-rotate(0deg)";//blue for on the way
                   }
                 }
               } else {
@@ -162,24 +314,24 @@
               var role = ""
               var numlabel = ''
               if(officers.officerNum.charAt(0) == '2'){
-                role = "Sector Magistrate";
-                numlabel = "Sector Number: ";
+                role = "सेक्टर मजिस्ट्रेट";
+                numlabel = "सेक्टर क्रमांक: ";
                 totalMagistrates++;
               }else if(officers.officerNum.charAt(0) == '3'){
-                role = "Zonal Magistrate";
-                numlabel = "Zonal Number: ";
+                role = "जोनल मजिस्ट्रेट";
+                numlabel = "जोनल क्रमांक: ";
                 totalMagistrates++;
               }else{
-                role = "Polling Party";
-                numlabel = "PS Num: ";
+                role = "पोलिंग पार्टी";
+                numlabel = "मतदान केंद्र क्रमांक: ";
                 totalPP++;
               }              
             
               if(roleValue == '1'){
-                marker.bindPopup(role + '<br>Assembly Constituency: ' + newAc + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from PS: ' + psdistance + '<br>Distance from last location: ' + distance).openPopup();
+                marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng + '<br>मतदान केंद्र से दूरी: ' + (Math.round(psdistance))/1000 + ' km').openPopup();
               }
               else{
-                marker.bindPopup(role + '<br>Assembly Constituency: ' + newAc + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
+                marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng).openPopup();
               }
             });
 
@@ -196,7 +348,7 @@
 
       // Fetch and display PS locations every minute
       fetchAndDisplayLocations();
-      setInterval(fetchAndDisplayLocations, 60000); // 1 minute in milliseconds
+      setInterval(fetchAndDisplayLocations, 300000); // 5 minute in milliseconds
     });
   </script>
 </body>

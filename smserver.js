@@ -40,6 +40,28 @@ const officerSchema = new mongoose.Schema({
 // Create a Mongoose model from the schema
 const Officer = mongoose.model('officerLocations', officerSchema);
 
+//function to calculate distance between two geolocations
+function calculateDistance(location1, location2) {
+  var coordinates1 = location1.split(',');
+  var latlng1 = [parseFloat(coordinates1[0]), parseFloat(coordinates1[1])];
+  var coordinates2 = location2.split(',');
+  var latlng2 = [parseFloat(coordinates2[0]), parseFloat(coordinates2[1])];
+
+  var R = 6371e3; // Radius of the earth in meters
+  var lat1 = latlng1[0] * Math.PI/180; // Convert degrees to radians
+  var lat2 = latlng2[0] * Math.PI/180;
+  var deltaLat = (latlng2[0]-latlng1[0]) * Math.PI/180;
+  var deltaLon = (latlng2[1]-latlng1[1]) * Math.PI/180;
+
+  var a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
+          Math.cos(lat1) * Math.cos(lat2) *
+          Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  var distance = R * c; // Distance in meters
+  return distance;
+}
+
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
@@ -90,11 +112,24 @@ const server = http.createServer((req, res) => {
             // Update the existing document 
             console.log(existingOfficer.current_location);
             existingOfficer.current_location = current_location;
-            if(existingOfficer.isTime == 30){
+            
+            if(roleValue === '1'){
+              var PSdistance = calculateDistance(ps_location, current_location);
+              if (PSdistance > 500){
+                if(existingOfficer.isTime == 30){
+                  existingOfficer.earlier_locations.push(current_location);
+                  existingOfficer.before30mins_location = existingOfficer.earlier_locations.splice(0, 1)[0];
+                }else{
+                  existingOfficer.isTime += 5;
+                  existingOfficer.earlier_locations.push(current_location);
+                  existingOfficer.before30mins_location = existingOfficer.earlier_locations[0];
+                }
+              }
+            }else if(existingOfficer.isTime == 30){
               existingOfficer.earlier_locations.push(current_location);
-              existingOfficer.before30mins_location = existingOfficer.earlier_locations.shift();
+              existingOfficer.before30mins_location = existingOfficer.earlier_locations.splice(0, 1)[0];
             }else{
-              existingOfficer.isTime += 1;
+              existingOfficer.isTime += 5;
               existingOfficer.earlier_locations.push(current_location);
               existingOfficer.before30mins_location = existingOfficer.earlier_locations[0];
             }
@@ -137,8 +172,8 @@ const server = http.createServer((req, res) => {
     });
   } else if (req.url === '/psdashboard') {
     // Serve psdashboard.html
-    const smdashboardPath = path.join(__dirname, 'public', 'psdashboard.html');
-    fs.readFile(smdashboardPath, (err, data) => {
+    const psdashboardPath = path.join(__dirname, 'public', 'psdashboard.html');
+    fs.readFile(psdashboardPath, (err, data) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Internal Server Error');
