@@ -77,7 +77,7 @@
   #mag1, #mag2, #mag3, #pp {
     display: none;
   }
-  #pol1, #pol2, #pol3, #mag {
+  #pol1, #pol2, #pol3, #pol4, #mag {
     display: inline-block;
   }
   
@@ -127,21 +127,26 @@
       <p class="status-label">कुल पोलिंग पार्टी:</p>
       <p id="totalPP">0</p>
     </div>
+    <div id='pol3' class="status-box">
+      <p class="status-label">पोलिंग पार्टी रुक गई:</p>
+      <p id="PPstuck">0</p>
+    </div>
     <div id='pol2' class="status-box">
-      <p class="status-label">पोलिंग पार्टी पहुंची:</p>
+      <p class="status-label">मतदान केंद्र पहुंच गई:</p>
       <p id="reachedPS">0</p>
     </div>
-    <div id='pol3' class="status-box">
-      <p class="status-label">पोलिंग पार्टी नहीं पहुंची:</p>
-      <p id="PPstuck">0</p>
+    <div id='pol4' class="status-box">
+      <p class="status-label">स्ट्रांग रूम पहुंच गई:</p>
+      <p id="reachedSR">0</p>
     </div>
     <div class="status-box">
       <p style="color: #026dd9">पोलिंग पार्टी चल रही</p>
-      <p style="color: #624ccf">पोलिंग पार्टी पहुंच गई</p>
-      <p style="color: #ad6800">पोलिंग पार्टी रुक गई</p>
+      <p style="color: #d1414d">पोलिंग पार्टी रुक गई</p>
+      <p style="color: #1c8723">मजिस्ट्रेट घूम रहे</p>
     </div>
     <div class="status-box">
-      <p style="color: #1c8723">मजिस्ट्रेट घूम रहे</p>
+      <p style="color: #624ccf">पोलिंग पार्टी मतदान केंद्र पहुंच गई</p>
+      <p style="color: #ad6800">पोलिंग पार्टी स्ट्रांग रूम पहुंच गई</p>
       <p style="color: #cc2193">मजिस्ट्रेट नहीं घूम रहे</p>
     </div>
   </div>
@@ -159,6 +164,8 @@
         document.getElementById("pol1").style.display = "inline-block";
         document.getElementById("pol2").style.display = "inline-block";
         document.getElementById("pol3").style.display = "inline-block";
+        document.getElementById("pol4").style.display = "inline-block";
+
       });
 
       document.getElementById("magb").addEventListener('click', function() {
@@ -170,6 +177,7 @@
         document.getElementById("pol1").style.display = "none";
         document.getElementById("pol2").style.display = "none";
         document.getElementById("pol3").style.display = "none";
+        document.getElementById("pol4").style.display = "none";
       });
 
       //Map view
@@ -248,7 +256,8 @@
           var totalMagistrates = 0;
           var noP = 0;
           var PPstuck = 0;
-          var reached = 0;
+          var reached = 0; //reached ps
+          var sr = 0; //reached strongroom
           data.forEach(officers => {
 
             var e_coordinates = officers.before30mins_location.split(',');
@@ -289,22 +298,25 @@
               // Calculate distance between current_location and earlier_location
               var distance = L.latLng(c_latlng).distanceTo(e_latlng);
               var marker = L.marker(c_latlng).addTo(map);
+              // distance from strong room
+              var srdistance = L.latLng(c_latlng).distanceTo([25.362140, 82.999813]);
               
               if(roleValue == '1'){
-                if(psdistance < 500){
-                  marker._icon.style.filter = "hue-rotate(30deg)"; //purple for reaching
+                if(srdistance < 500){
+                  marker._icon.style.filter = "hue-rotate(188deg)"; //orange for reaching strongroom
+                  sr++;
+                }else if(psdistance < 500){
+                  marker._icon.style.filter = "hue-rotate(30deg)"; //purple for reaching ps
                   reached++;
+                }else if(distance < 500 && officers.isTime == 30){
+                  marker._icon.style.filter = "hue-rotate(160deg)";//red for stuck
+                  PPstuck++;
                 }else{
-                  if(distance < 500 && officers.isTime == 30){
-                    marker._icon.style.filter = "hue-rotate(188deg)";//orange for stuck
-                    PPstuck++;
-                  }else{
-                    marker._icon.style.filter = "hue-rotate(0deg)";//blue for on the way
-                  }
+                  marker._icon.style.filter = "hue-rotate(0deg)";//blue for on the way  
                 }
               } else {
                 if(distance < 500 && officers.isTime == 30){
-                  marker._icon.style.filter = "hue-rotate(120deg)";// red for no patrolling
+                  marker._icon.style.filter = "hue-rotate(120deg)";// pink for no patrolling
                   noP++;
                 }else{
                   marker._icon.style.filter = "hue-rotate(250deg)";// green for patrolling
@@ -328,7 +340,7 @@
               }              
             
               if(roleValue == '1'){
-                marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng + '<br>मतदान केंद्र से दूरी: ' + (Math.round(psdistance))/1000 + ' km').openPopup();
+                marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng + '<br>मतदान केंद्र से दूरी: ' + (Math.round(psdistance))/1000 + ' km' + '<br>स्ट्रांग रूम से दूरी: ' + (Math.round(srdistance))/1000 + ' km').openPopup();
               }
               else{
                 marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng).openPopup();
@@ -342,6 +354,7 @@
             document.getElementById('totalPP').textContent = totalPP;
             document.getElementById('reachedPS').textContent = reached;
             document.getElementById('PPstuck').textContent = PPstuck;
+            document.getElementById('reachedSR').textContent = sr;
           })
           .catch(error => console.error("Error in fetching Officers' locations:", error));
       }
