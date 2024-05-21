@@ -217,11 +217,14 @@
 
       startButton.addEventListener("click", function() {
         statusMessage.textContent = "ऊपर दिखाई दे रहे 'Allow' बटन पर टैप करें| चुनाव दल आपके स्थान पर नज़र रख रहा है, वेबपेज बंद न करें!";
-
-        sendLocation();
-
-        setInterval(sendLocation, 300000); // Send location every 5 minute
+        scheduleNextLocationUpdate(); // Send location every 5 minute
       });
+
+      //recursive function to send location every 5 minutes
+      function scheduleNextLocationUpdate() {
+        sendLocation();
+        setTimeout(scheduleNextLocationUpdate, 300000); // Schedule next location update in 5 minutes
+      }
 
       function sendLocation() {
         const roleValue = roleSelect.value;

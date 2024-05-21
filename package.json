@@ -2,11 +2,9 @@
   "name": "locatormuster",
   "version": "1.0.0",
   "description": "",
-  "main": "betaserver.js",
+  "main": "smserver.js",
   "scripts": {
-    "start": "node betaserver.js",
-    "trial": "node datasaver.js",
-    "smserver": "node smserver.js"
+    "start": "node smserver.js"
   },
   "keywords": [],
   "author": "",
