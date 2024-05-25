@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracking Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1 {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  #map {
+    height: 600px;
+    margin: 20px auto;
+  }
+
+  #status {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .status-box {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: inline-block;
+    margin-right: 10px;
+  }
+
+  .status-label {
+    font-weight: bold;
+  }
+
+  #disabledTrackers {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  #disabledTrackers table {
+    width: 80%;
+    margin: 0 auto;
+    border-collapse: collapse;
+  }
+
+  #disabledTrackers th, #disabledTrackers td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+
+  #disabledTrackers th {
+    background-color: #f2f2f2;
+  }
+
+  #disabledTrackers td {
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>Tracking Dashboard</h1>
+  <div id="map"></div>
+  <div id="status">
+    <div class="status-box">
+      <p class="status-label">Total Officers:</p>
+      <p id="totalOfficers">0</p>
+    </div>
+
+    <div class="status-box">
+      <p class="status-label">Tracking Enabled:</p>
+      <p id="trackingEnabled">0</p>
+    </div>
+    <div class="status-box">
+      <p class="status-label">Tracking Disabled:</p>
+      <p id="trackingDisabled">0</p>
+    </div>
+  </div>
+
+  <div id="disabledTrackers">
+    <h2>Officers with Disabled Trackers</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Officer Number</th>
+          <th>Last Known Coordinates</th>
+          <th>Last Updated Time</th>
+        </tr>
+      </thead>
+      <tbody id="disabledList"></tbody>
+    </table>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var map = L.map('map').setView([25.326875, 82.983908], 12); // set view anywhere.
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      var redIcon = new L.Icon({
+        iconUrl: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+      });
+
+      var blueIcon = new L.Icon({
+        iconUrl: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+      });
+
+      function fetchAndDisplayLocations() {
+        fetch("/smdashboard2")
+          .then(response => response.json())
+          .then(data => {
+            console.log("Fetched data:", data); // Debug log for fetched data
+            var flag = 0;
+            var trackingEnabled = 0;
+            var trackingDisabled = 0;
+            var now = Date.now();
+
+            data.forEach(location => {
+              var e_coordinates = location.before30mins_location.split(',');
+              var e_latlng = [parseFloat(e_coordinates[0]), parseFloat(e_coordinates[1])];
+              var c_coordinates = location.current_location.split(',');
+              var c_latlng = [parseFloat(c_coordinates[0]), parseFloat(c_coordinates[1])];
+
+              var temp = c_latlng[0];
+              if (c_latlng[0] > c_latlng[1]) {
+                temp = c_latlng[0];
+                c_latlng[0] = c_latlng[1];
+                c_latlng[1] = temp;
+              }
+              temp = e_latlng[0];
+              if (e_latlng[0] > e_latlng[1]) {
+                temp = e_latlng[0];
+                e_latlng[0] = e_latlng[1];
+                e_latlng[1] = temp;
+              }
+
+              // Calculate distance between current_location and earlier_location
+              var distance = L.latLng(c_latlng).distanceTo(e_latlng);
+
+              // Determine marker icon based on tracking status
+              var markerIcon = (now - new Date(location.lastUpdated).getTime()) < 120000 ? blueIcon : redIcon;
+
+              // Create marker with appropriate icon
+              var marker = L.marker(c_latlng, { icon: markerIcon }).addTo(map);
+
+              if (distance < 500 && location.isTime == 30) {
+                flag++;
+              }
+
+              if ((now - new Date(location.lastUpdated).getTime()) < 120000) { // Check if updated in the last 2 min
+                trackingEnabled++;
+              } else {
+                trackingDisabled++;
+              }
+
+              var role = "";
+              var ac = location.officerNum.charAt(1);
+              var num = '';
+              var numlabel = '';
+
+              if(location.officerNum.charAt(0) == '2'){
+                role = "Sector Magistrate";
+                num = location.officerNum.substring(2);
+                numlabel = "Sector Number: ";
+              } else if(location.officerNum.charAt(0) == '3'){
+                role = "Zonal Magistrate";
+                num = location.officerNum.substring(2);
+                numlabel = "Zonal Number: ";
+              }
+
+              marker.bindPopup(role + '<br>Assembly Constituency: ' + location.officerNum.charAt(1) + '<br>' + numlabel + num + '<br>Location: ' + c_latlng + '<br>Distance from last location: ' + distance).openPopup();
+            });
+
+            // Update status
+            document.getElementById('totalOfficers').textContent = data.length;
+
+            document.getElementById('trackingEnabled').textContent = trackingEnabled;
+            document.getElementById('trackingDisabled').textContent = trackingDisabled;
+          })
+          .catch(error => console.error("Error in fetching Officers' locations:", error));
+      }
+
+      function fetchDisabledTrackers() {
+        console.log("Fetching disabled trackers...");
+        fetch("/disabledTrackers")
+          .then(response => response.json())
+          .then(data => {
+            console.log("Disabled Tracker Data:", data); // Debug log for disabled tracker data
+            var disabledList = document.getElementById('disabledList');
+            disabledList.innerHTML = '';
+            data.forEach(officer => {
+              var row = document.createElement('tr');
+              var officerNumCell = document.createElement('td');
+              var coordinatesCell = document.createElement('td');
+              var lastUpdatedCell = document.createElement('td');
+
+              officerNumCell.textContent = `Officer ${officer.officerNum}`;
+              coordinatesCell.textContent = officer.current_location;
+              lastUpdatedCell.textContent = new Date(officer.lastUpdated).toLocaleString();
+
+              row.appendChild(officerNumCell);
+              row.appendChild(coordinatesCell);
+              row.appendChild(lastUpdatedCell);
+
+              disabledList.appendChild(row);
+            });
+          })
+          .catch(error => console.error("Error fetching disabled officers:", error));
+      }
+
+      // Fetch and display PS locations every 2 min
+      fetchAndDisplayLocations();
+      fetchDisabledTrackers();
+      setInterval(fetchAndDisplayLocations, 120000); // 2 minutes in milliseconds
+      setInterval(fetchDisabledTrackers, 120000); // 2 minutes in milliseconds
+
+    });
+  </script>
+</body>
+</html>
