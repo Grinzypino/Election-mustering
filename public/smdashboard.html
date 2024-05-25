@@ -208,6 +208,7 @@
         .then(data => {
 
           var psSelect = document.getElementById('psSelect');
+          psSelect.innerHTML = '<option value="" disabled selected>मतदान केंद्र का चयन करें:</option>'; // Clear previous options
 
           data.forEach(location => {
             
@@ -252,6 +253,7 @@
         fetch("/smdashboard2")
         .then(response => response.json())
         .then(data => {
+          console.log("Fetched data:", data); // Debug log for fetched data
           var totalPP = 0;
           var totalMagistrates = 0;
           var noP = 0;
@@ -293,73 +295,71 @@
               psdistance = L.latLng(c_latlng).distanceTo(ps_latlng);    
             }
               
-
+            // Calculate distance between current_location and earlier_location
+            var distance = L.latLng(c_latlng).distanceTo(e_latlng);
+            var marker = L.marker(c_latlng).addTo(map);
+            // distance from strong room
+            var srdistance = L.latLng(c_latlng).distanceTo([25.362140, 82.999813]);
               
-              // Calculate distance between current_location and earlier_location
-              var distance = L.latLng(c_latlng).distanceTo(e_latlng);
-              var marker = L.marker(c_latlng).addTo(map);
-              // distance from strong room
-              var srdistance = L.latLng(c_latlng).distanceTo([25.362140, 82.999813]);
-              
-              if(roleValue == '1'){
-                if(srdistance < 500){
-                  marker._icon.style.filter = "hue-rotate(188deg)"; //orange for reaching strongroom
-                  sr++;
-                }else if(psdistance < 500){
-                  marker._icon.style.filter = "hue-rotate(30deg)"; //purple for reaching ps
-                  reached++;
-                }else if(distance < 500 && officers.isTime == 30){
-                  marker._icon.style.filter = "hue-rotate(160deg)";//red for stuck
-                  PPstuck++;
-                }else{
-                  marker._icon.style.filter = "hue-rotate(0deg)";//blue for on the way  
-                }
-              } else {
-                if(distance < 500 && officers.isTime == 30){
-                  marker._icon.style.filter = "hue-rotate(120deg)";// pink for no patrolling
-                  noP++;
-                }else{
-                  marker._icon.style.filter = "hue-rotate(250deg)";// green for patrolling
-                }
-              }
-              
-              var role = ""
-              var numlabel = ''
-              if(officers.officerNum.charAt(0) == '2'){
-                role = "सेक्टर मजिस्ट्रेट";
-                numlabel = "सेक्टर क्रमांक: ";
-                totalMagistrates++;
-              }else if(officers.officerNum.charAt(0) == '3'){
-                role = "जोनल मजिस्ट्रेट";
-                numlabel = "जोनल क्रमांक: ";
-                totalMagistrates++;
+            if(roleValue == '1'){
+              if(srdistance < 500){
+                marker._icon.style.filter = "hue-rotate(188deg)"; //orange for reaching strongroom
+                sr++;
+              }else if(psdistance < 500){
+                marker._icon.style.filter = "hue-rotate(30deg)"; //purple for reaching ps
+                reached++;
+              }else if(distance < 500 && officers.isTime == 30){
+                marker._icon.style.filter = "hue-rotate(160deg)";//red for stuck
+                PPstuck++;
               }else{
-                role = "पोलिंग पार्टी";
-                numlabel = "मतदान केंद्र क्रमांक: ";
-                totalPP++;
-              }              
+                marker._icon.style.filter = "hue-rotate(0deg)";//blue for on the way  
+              }
+            } else {
+              if(distance < 500 && officers.isTime == 30){
+                marker._icon.style.filter = "hue-rotate(120deg)";// pink for no patrolling
+                noP++;
+              }else{
+                marker._icon.style.filter = "hue-rotate(250deg)";// green for patrolling
+              }
+            }
+              
+            var role = ""
+            var numlabel = ''
+            if(officers.officerNum.charAt(0) == '2'){
+              role = "सेक्टर मजिस्ट्रेट";
+              numlabel = "सेक्टर क्रमांक: ";
+              totalMagistrates++;
+            }else if(officers.officerNum.charAt(0) == '3'){
+              role = "जोनल मजिस्ट्रेट";
+              numlabel = "जोनल क्रमांक: ";
+              totalMagistrates++;
+            }else{
+              role = "पोलिंग पार्टी";
+              numlabel = "मतदान केंद्र क्रमांक: ";
+              totalPP++;
+            }              
             
-              if(roleValue == '1'){
-                marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng + '<br>मतदान केंद्र से दूरी: ' + (Math.round(psdistance))/1000 + ' km' + '<br>स्ट्रांग रूम से दूरी: ' + (Math.round(srdistance))/1000 + ' km').openPopup();
-              }
-              else{
-                marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng).openPopup();
-              }
-            });
+            if(roleValue == '1'){
+              marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng + '<br>मतदान केंद्र से दूरी: ' + (Math.round(psdistance))/1000 + ' km' + '<br>स्ट्रांग रूम से दूरी: ' + (Math.round(srdistance))/1000 + ' km').openPopup();
+            }
+            else{
+              marker.bindPopup(role + '<br>विधानसभा क्षेत्र: ' + newAc + '<br>' + numlabel + num + '<br>वर्तमान स्थान: ' + c_latlng).openPopup();
+            }
+          });
 
-            // Update status
-            document.getElementById('totalOfficers').textContent = totalMagistrates;
-            document.getElementById('patrolling').textContent = totalMagistrates - noP;
-            document.getElementById('notPatrolling').textContent = noP;
-            document.getElementById('totalPP').textContent = totalPP;
-            document.getElementById('reachedPS').textContent = reached;
-            document.getElementById('PPstuck').textContent = PPstuck;
-            document.getElementById('reachedSR').textContent = sr;
-          })
-          .catch(error => console.error("Error in fetching Officers' locations:", error));
+          // Update status
+          document.getElementById('totalOfficers').textContent = totalMagistrates;
+          document.getElementById('patrolling').textContent = totalMagistrates - noP;
+          document.getElementById('notPatrolling').textContent = noP;
+          document.getElementById('totalPP').textContent = totalPP;
+          document.getElementById('reachedPS').textContent = reached;
+          document.getElementById('PPstuck').textContent = PPstuck;
+          document.getElementById('reachedSR').textContent = sr;
+        })
+        .catch(error => console.error("Error in fetching Officers' locations:", error));
       }
 
-      // Fetch and display PS locations every minute
+      // Fetch and display PS locations every 5 minutes
       fetchAndDisplayLocations();
       setInterval(fetchAndDisplayLocations, 300000); // 5 minute in milliseconds
     });

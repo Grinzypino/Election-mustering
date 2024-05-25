@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 8000;
 // MongoDB connection URI
 const MONGODB_URI = 'mongodb+srv://electionbackend:ePwDnqXF3GNzmwCc@election.ptaluj8.mongodb.net/?retryWrites=true&w=majority&appName=election';
 
-// Defined a schema for polling station data
+// Schema for Polling Station Data
 const psSchema = new mongoose.Schema({
   acPS: String,
   numPS: String,
@@ -18,7 +18,7 @@ const psSchema = new mongoose.Schema({
   longPS: Number
 });
 
-// Created Mongoose model from the schema
+// Create Mongoose models for polling stations
 const ac384ps = mongoose.model('ac384ps', psSchema);
 const ac385ps = mongoose.model('ac385ps', psSchema);
 const ac386ps = mongoose.model('ac386ps', psSchema);
@@ -28,20 +28,21 @@ const ac389ps = mongoose.model('ac389ps', psSchema);
 const ac390ps = mongoose.model('ac390ps', psSchema);
 const ac391ps = mongoose.model('ac391ps', psSchema);
 
-// Defined a schema for officer data
+// Schema for Officer Data
 const officerSchema = new mongoose.Schema({
   officerNum: String,
   current_location: String,
   before30mins_location: String,
   earlier_locations: Array,
   isTime: Number,
+  lastUpdated: { type: Date, default: Date.now },
   ps_location: String
 });
 
 // Create a Mongoose model from the schema
 const Officer = mongoose.model('officerLocations', officerSchema);
 
-//function to calculate distance between two geolocations
+// Function to calculate distance between two geolocations
 function calculateDistance(location1, location2) {
   var coordinates1 = location1.split(',');
   var latlng1 = [parseFloat(coordinates1[0]), parseFloat(coordinates1[1])];
@@ -49,15 +50,15 @@ function calculateDistance(location1, location2) {
   var latlng2 = [parseFloat(coordinates2[0]), parseFloat(coordinates2[1])];
 
   var R = 6371e3; // Radius of the earth in meters
-  var lat1 = latlng1[0] * Math.PI/180; // Convert degrees to radians
-  var lat2 = latlng2[0] * Math.PI/180;
-  var deltaLat = (latlng2[0]-latlng1[0]) * Math.PI/180;
-  var deltaLon = (latlng2[1]-latlng1[1]) * Math.PI/180;
+  var lat1 = latlng1[0] * Math.PI / 180; // Convert degrees to radians
+  var lat2 = latlng2[0] * Math.PI / 180;
+  var deltaLat = (latlng2[0] - latlng1[0]) * Math.PI / 180;
+  var deltaLon = (latlng2[1] - latlng1[1]) * Math.PI / 180;
 
-  var a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
-          Math.cos(lat1) * Math.cos(lat2) *
-          Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  var a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) *
+    Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   var distance = R * c; // Distance in meters
   return distance;
@@ -74,90 +75,80 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
 
 // Middleware to parse JSON requests
 app.use(bodyParser.json());
-
-// Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/updateValues', (req, res) => {
-      const officerData = req.body;
-      
-      console.log('Received officer data:', officerData);
+  const officerData = req.body;
 
-      // Ensure officerNum and current_location are strings
-      const roleValue= String(officerData.roleValue);
-      const acValue= String(officerData.acValue);
-      const psValue= String(officerData.psValue);
-      const snoValue= String(officerData.snoValue);
-      const znoValue= String(officerData.znoValue);
-      const current_location = String(officerData.current_location.coordinates);
-      const ps_location = String(officerData.ps_location.coordinates);
-      // const officerNum = roleValue + acValue + psValue + snoValue + znoValue;
+  console.log('Received officer data:', officerData);
 
-      // Find the existing officer document for the selected officer
-      
-      { 
-        var officerNum = "";
-        if(roleValue === '2'){
-          officerNum = roleValue + acValue + snoValue;
-        }
-        else if(roleValue === '3'){
-          officerNum = roleValue + acValue + znoValue;
-        }
-        else if(roleValue === '1'){
-          officerNum = roleValue + acValue + psValue;
-        }
-       Officer.findOne({ officerNum: officerNum })
-        .then((existingOfficer) => {
-          if (existingOfficer) {
-            // Update the existing document 
-            console.log(existingOfficer.current_location);
-            existingOfficer.current_location = current_location;
-            
-            if(roleValue === '1'){
-              var PSdistance = calculateDistance(ps_location, current_location);
-              if (PSdistance > 500){
-                if(existingOfficer.isTime == 30){
-                  existingOfficer.earlier_locations.push(current_location);
-                  existingOfficer.before30mins_location = existingOfficer.earlier_locations.splice(0, 1)[0];
-                }else{
-                  existingOfficer.isTime += 5;
-                  existingOfficer.earlier_locations.push(current_location);
-                  existingOfficer.before30mins_location = existingOfficer.earlier_locations[0];
-                }
-              }
-            }else if(existingOfficer.isTime == 30){
+  const roleValue = String(officerData.roleValue);
+  const acValue = String(officerData.acValue);
+  const psValue = String(officerData.psValue);
+  const snoValue = String(officerData.snoValue);
+  const znoValue = String(officerData.znoValue);
+  const current_location = String(officerData.current_location.coordinates);
+  const ps_location = String(officerData.ps_location.coordinates);
+
+  let officerNum = "";
+  if (roleValue === '2') {
+    officerNum = roleValue + acValue + snoValue;
+  } else if (roleValue === '3') {
+    officerNum = roleValue + acValue + znoValue;
+  } else if (roleValue === '1') {
+    officerNum = roleValue + acValue + psValue;
+  }
+
+  Officer.findOne({ officerNum: officerNum })
+    .then((existingOfficer) => {
+      if (existingOfficer) {
+        existingOfficer.current_location = current_location;
+
+        if (roleValue === '1') {
+          const PSdistance = calculateDistance(ps_location, current_location);
+          if (PSdistance > 500) {
+            if (existingOfficer.isTime == 30) {
               existingOfficer.earlier_locations.push(current_location);
-              existingOfficer.before30mins_location = existingOfficer.earlier_locations.splice(0, 1)[0];
-            }else{
+              existingOfficer.before30mins_location = existingOfficer.earlier_locations.shift();
+            } else {
               existingOfficer.isTime += 5;
               existingOfficer.earlier_locations.push(current_location);
               existingOfficer.before30mins_location = existingOfficer.earlier_locations[0];
             }
-             return existingOfficer.save()
-              .then(() => {
-                console.log('current location data updated');
-                res.writeHead(200, { 'Content-Type': 'text/plain' });
-                res.end('Location data updated');
-              });
-          } else {
-            // No existing document found, create a new one
-            const newOfficer = new Officer({
-              officerNum: officerNum,
-              current_location: current_location,
-              before30mins_location: current_location,
-              earlier_locations: [current_location],
-              isTime: 0,
-              ps_location: ps_location
-            });
-            return newOfficer.save();
           }
-        })
-        .catch((err) => {
-          console.error('Error updating location data:', err);
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('Internal Server Error');
+        } else if (existingOfficer.isTime == 30) {
+          existingOfficer.earlier_locations.push(current_location);
+          existingOfficer.before30mins_location = existingOfficer.earlier_locations.shift();
+        } else {
+          existingOfficer.isTime += 5;
+          existingOfficer.earlier_locations.push(current_location);
+          existingOfficer.before30mins_location = existingOfficer.earlier_locations[0];
+        }
+
+        return existingOfficer.save()
+          .then(() => {
+            console.log('current location data updated');
+            res.status(200).send('Location data updated');
+          });
+      } else {
+        const newOfficer = new Officer({
+          officerNum: officerNum,
+          current_location: current_location,
+          before30mins_location: current_location,
+          earlier_locations: [current_location],
+          isTime: 0,
+          ps_location: ps_location
         });
+        return newOfficer.save()
+          .then(() => {
+            res.status(200).send('Location data saved');
+          });
       }
+    })
+    .catch((err) => {
+      console.error('Error updating location data:', err);
+      res.status(500).send('Internal Server Error');
+    });
 });
 
 // Serve HTML files with error handling
@@ -178,12 +169,26 @@ app.get('/smdashboard', (req, res) => {
   serveHtmlFile(path.join(__dirname, 'public', 'smdashboard.html'), res);
 });
 
+app.get('/trackerDashboard', (req, res) => {
+  serveHtmlFile(path.join(__dirname, 'public', 'trackerDashboard.html'), res);
+});
 
-// Fetch all officers data
+app.get('/disabledTrackers', (req, res) => {
+  const fourMinutesAgo = Date.now() - 240000; // 4 minutes in milliseconds
+  Officer.find({ lastUpdated: { $lt: fourMinutesAgo } })
+    .then(disabledOfficers => {
+      res.status(200).json(disabledOfficers);
+    })
+    .catch(err => {
+      console.error('Error fetching disabled officers data:', err);
+      res.status(500).send('Internal Server Error');
+    });
+});
+
 app.get('/smdashboard2', (req, res) => {
   Officer.find({})
-    .then((allofficers) => {
-      res.status(200).json(allofficers);
+    .then((allOfficers) => {
+      res.status(200).json(allOfficers);
     })
     .catch((err) => {
       console.error('Error fetching all officers data:', err);
@@ -234,6 +239,22 @@ app.get('/ac390ps', (req, res) => {
 app.get('/ac391ps', (req, res) => {
   fetchAllPSDocuments(ac391ps, res);
 });
+
+// Interval check for officers who haven't updated their location in the last 4 minutes
+setInterval(() => {
+  const fourMinutesAgo = Date.now() - 240000; // 240000 ms = 4 minutes
+  Officer.find({})
+    .then((allOfficers) => {
+      allOfficers.forEach(officer => {
+        if (new Date(officer.lastUpdated).getTime() < fourMinutesAgo) {
+          console.log(`Officer ${officer.officerNum} has not updated location since ${officer.lastUpdated}. Location update may be disabled.`);
+        }
+      });
+    })
+    .catch((err) => {
+      console.error('Error fetching all officer data:', err);
+    });
+}, 240000); // 4 minutes in milliseconds
 
 // Start the server
 app.listen(PORT, () => {
